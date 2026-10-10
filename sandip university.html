@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#F2F2F7">
+<meta name="description" content="DHRUV — Minimum Cost Campus Network using Minimum Spanning Tree">
+<title>Minimum Cost Campus Network</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f2f2f7;--card:#fff;--text:#17171a;--muted:#6b6b73;--primary:#007aff;--green:#34c759;--red:#ff3b30;--orange:#ff9500;--border:#dedee5;--shadow:0 8px 25px rgba(0,0,0,.08)}
+body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.94);backdrop-filter:blur(15px);border-bottom:1px solid var(--border)}
+.header-inner{max-width:1400px;margin:auto;min-height:72px;padding:12px 25px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand h1{font-size:21px}.brand p{font-size:12px;color:var(--muted);margin-top:3px}
+nav{display:flex;gap:7px;flex-wrap:wrap}
+nav button{border:0;background:transparent;padding:10px 13px;border-radius:10px;cursor:pointer;color:#555;font-weight:600}
+nav button:hover,nav button.active{background:#e8f2ff;color:var(--primary)}
+main{max-width:1400px;margin:auto;padding:30px 25px 60px}
+.page{display:none}.page.active{display:block}
+.hero{background:linear-gradient(135deg,#007aff,#5856d6);color:#fff;padding:45px;border-radius:25px;box-shadow:var(--shadow);margin-bottom:25px}
+.hero h2{font-size:40px;margin-bottom:12px}.hero p{max-width:800px;line-height:1.7;opacity:.95}
+.hero-buttons{margin-top:25px;display:flex;gap:12px;flex-wrap:wrap}
+.btn{border:none;border-radius:12px;padding:12px 18px;cursor:pointer;font-weight:bold;transition:.2s;background:#e5e5ea;color:#222}
+.btn:hover{transform:translateY(-2px)}
+.btn-primary{background:var(--primary);color:#fff}.btn-light{background:#fff;color:#222}.btn-danger{background:var(--red);color:#fff}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:25px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px;box-shadow:var(--shadow)}
+.stat-card span{color:var(--muted);font-size:13px}.stat-card strong{display:block;font-size:30px;margin-top:8px}
+.content-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:22px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:24px;box-shadow:var(--shadow)}
+.card h2{margin-bottom:10px}.card h3{margin-bottom:15px}.card p{line-height:1.7;color:#555}
+.graph-container{position:relative;width:100%;overflow:hidden;border-radius:18px;background:linear-gradient(#e9e9ef 1px,transparent 1px),linear-gradient(90deg,#e9e9ef 1px,transparent 1px);background-size:35px 35px;border:1px solid var(--border)}
+#graphSvg{width:100%;height:auto;display:block}
+.edge-line{stroke:#9b9ba2;stroke-width:3}.edge-line.mst{stroke:var(--green);stroke-width:7}.edge-line.path{stroke:var(--orange);stroke-width:8}
+.edge-cost{fill:#333;font-size:14px;font-weight:bold;text-anchor:middle;dominant-baseline:middle;paint-order:stroke;stroke:#fff;stroke-width:4px}
+.building-image{cursor:pointer}
+.building-name{font-size:13px;font-weight:bold;fill:#17171a;text-anchor:middle}
+.building-id{font-size:13px;font-weight:bold;fill:#fff;text-anchor:middle;dominant-baseline:middle}
+.controls{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0;align-items:flex-end}
+.algorithm-box{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:15px}
+.algorithm-box button{padding:14px;border-radius:12px;border:2px solid var(--border);background:#fff;cursor:pointer;font-weight:bold}
+.algorithm-box button:hover{border-color:var(--primary);color:var(--primary)}
+.table-wrapper{overflow-x:auto}
+table{width:100%;border-collapse:collapse;margin-top:15px}
+th,td{padding:12px;text-align:left;border-bottom:1px solid var(--border)}
+th{background:#f5f5f8}
+.mst-row{background:#e9f9ed}
+.matrix th,.matrix td{text-align:center;border:1px solid var(--border);padding:9px 12px;white-space:nowrap}
+.matrix td.click{cursor:pointer}.matrix td.click:hover{background:#e8f2ff}.matrix td.diag{background:#f1f1f5;color:#aaa}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:20px;z-index:200}
+.modal.show{display:flex}
+.modal-box{width:min(500px,100%);background:#fff;border-radius:22px;padding:25px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-box h3{margin-bottom:20px}
+.form-group{margin-bottom:15px;flex:1;min-width:180px}.form-group label{display:block;font-weight:bold;margin-bottom:7px}
+input,select{width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;font-size:15px}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+.result-box{background:#eef8ff;border:1px solid #b7ddff;border-radius:15px;padding:18px;margin-top:20px}
+.result-cost{font-size:35px;font-weight:bold;color:var(--green);margin:10px 0}
+.step{padding:10px;border-bottom:1px solid var(--border)}
+.info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:20px}
+.info-item{padding:20px;background:#f7f7fa;border-radius:15px}.info-item h4{margin-bottom:8px}
+footer{text-align:center;color:var(--muted);padding:30px;border-top:1px solid var(--border);margin-top:30px}
+@media(max-width:1000px){.stats{grid-template-columns:repeat(2,1fr)}.content-grid,.info-grid{grid-template-columns:1fr}}
+@media(max-width:700px){.header-inner{flex-direction:column;align-items:flex-start}nav{width:100%;overflow-x:auto}main{padding:18px 12px 40px}.hero{padding:28px 20px}.hero h2{font-size:30px}.stats{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.stats,.algorithm-box{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header><div class="header-inner">
+  <div class="brand"><div class="brand-logo"></div>
+    <div>
+      <h1>SANDIP UNIVERSITY CAMPUS NETWORK</h1>
+      <img src="images/sandip.png" alt="SANDIP UNIVERSITY" style="border-radius:150px;height:auto;margin-top:5px;">
+      <p>Minimum Cost Campus Network</p>
+    </div>
+  </div>
+  <nav>
+    <button class="nav-btn active" data-page="home">Home</button>
+    <button class="nav-btn" data-page="network">Campus Network</button>
+    <button class="nav-btn" data-page="algorithms">MST Algorithms</button>
+    <button class="nav-btn" data-page="paths">Minimum Cost Between Buildings</button>
+    <button class="nav-btn" data-page="about">About</button>
+    
+  </nav>
+</div></header>
+
+<main>
+
+<!-- HOME -->
+<section id="home" class="page active">
+  <div class="hero">
+    <h2>Minimum Cost Campus Network</h2>
+    <p>SANDIP University campus network design using <strong>Minimum Spanning Tree (MST)</strong> algorithms to connect all campus buildings with minimum possible network installation cost, plus the <strong>minimum cost between every pair of buildings</strong>.</p>
+    <div class="hero-buttons">
+      <button class="btn btn-light" onclick="showPage('network')">Explore Campus Network</button>
+      <button class="btn btn-light" onclick="showPage('algorithms')">Run MST Algorithm</button>
+      <button class="btn btn-light" onclick="showPage('paths')">Minimum Cost Between Buildings</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card"><span>Campus Buildings</span><strong id="homeNodes">0</strong></div>
+    <div class="stat-card"><span>Network Connections</span><strong id="homeEdges">0</strong></div>
+    <div class="stat-card"><span>MST Connections</span><strong id="homeMst">0</strong></div>
+    <div class="stat-card"><span>Minimum Cost</span><strong id="homeCost">0</strong></div>
+  </div>
+
+  <div class="content-grid">
+    <div class="card">
+      <h3>What is Minimum Spanning Tree?</h3>
+      <p>A Minimum Spanning Tree is a subset of the edges of a connected weighted graph that connects all vertices without forming cycles and has the minimum possible total edge weight.</p><br>
+      <p>IN THIS PROJECT I AM USING <strong>Prim's Algorithm</strong> and <strong>Kruskal's Algorithm</strong> to find the Minimum Spanning Tree of the campus network graph. I USED OUR COLLAGE SANDIP UNIVERSITY CAMPUS MAP TO DESIGN THE GRAPH AND FIND THE MINIMUM COST NETWORK CONNECTION.</p>
+    </div>
+    <div class="card">
+      <h3>Project Objective</h3>
+      <p>The main objective is to design a campus network that connects every important building while minimizing the total installation cost.</p><br>
+      <ul style="line-height:2;padding-left:20px;">
+        <li>Represent campus as a weighted graph</li>
+        <li>Find the Minimum Spanning Tree</li>
+        <li>Remove unnecessary connections</li>
+        <li>Calculate minimum total cost</li>
+        <li>Compare Prim and Kruskal algorithms</li>
+        <li>Find minimum cost between each pair of buildings</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- CAMPUS NETWORK -->
+<section id="network" class="page">
+  <div class="card">
+    <h2>Campus Network Graph</h2>
+    <p>Each building is represented using a campus image. Each line represents a possible network connection. The number on the line represents the connection cost. Green = MST, orange = selected minimum-cost route.</p>
+    <div class="controls">
+      <button class="btn btn-primary" onclick="openBuildingModal()">+ Add Building</button>
+      <button class="btn btn-primary" onclick="openEdgeModal()">+ Add Connection</button>
+      <button class="btn btn-danger" onclick="resetCampus()">Reset Campus</button>
+    </div>
+    <div class="graph-container"><svg id="graphSvg" viewBox="0 0 1000 560" preserveAspectRatio="xMidYMid meet"></svg></div>
+  </div>
+  <div class="card" style="margin-top:22px;">
+    <h3>Campus Connections</h3>
+    <div class="table-wrapper"><table>
+      <thead><tr><th>Building A</th><th>Building B</th><th>Cost</th><th>MST</th></tr></thead>
+      <tbody id="edgeTable"></tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- MST ALGORITHMS -->
+<section id="algorithms" class="page">
+  <div class="card">
+    <h2>Minimum Spanning Tree Algorithms</h2>
+    <p>Select an algorithm to calculate the minimum cost campus network.</p>
+    <div class="algorithm-box">
+      <button onclick="runKruskal()">Run Kruskal's Algorithm</button>
+      <button onclick="runPrim()">Run Prim's Algorithm</button>
+    </div>
+    <div id="algorithmResult"><div class="result-box"><h3>Algorithm Result</h3><p>Choose Kruskal or Prim to calculate the MST.</p></div></div>
+  </div>
+
+  <div class="content-grid" style="margin-top:22px;">
+    <div class="card">
+      <h3>Kruskal's Algorithm</h3>
+      <p>Kruskal's algorithm sorts all edges according to their weight and repeatedly selects the smallest edge that does not create a cycle.</p><br>
+      <strong>Steps:</strong>
+      <ol style="line-height:2;padding-left:22px;margin-top:10px;">
+        <li>Sort all edges by increasing cost.</li><li>Select the cheapest edge.</li>
+        <li>Check whether it creates a cycle.</li><li>If there is no cycle, add it to MST.</li>
+        <li>Continue until all buildings are connected.</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h3>Prim's Algorithm</h3>
+      <p>Prim's algorithm starts from one building and repeatedly selects the cheapest edge that connects the existing tree to a new building.</p><br>
+      <strong>Steps:</strong>
+      <ol style="line-height:2;padding-left:22px;margin-top:10px;">
+        <li>Choose a starting building.</li><li>Find the cheapest connecting edge.</li>
+        <li>Add the new building.</li><li>Repeat until all buildings are connected.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- MINIMUM COST BETWEEN BUILDINGS -->
+<section id="paths" class="page">
+  <div class="card">
+    <h2>Minimum Cost Between Each Building</h2>
+    <p>The Floyd–Warshall algorithm finds the cheapest route cost between <strong>every pair</strong> of buildings, using any intermediate buildings. The MST minimises the total wiring cost; this finds the cheapest way to get from one specific building to another.</p>
+    <div class="controls">
+      <div class="form-group"><label>From</label><select id="pathFrom"></select></div>
+      <div class="form-group"><label>To</label><select id="pathTo"></select></div>
+      <button class="btn btn-primary" onclick="findPath()">Find Minimum Cost</button>
+      <button class="btn" onclick="clearPath()">Clear Route</button>
+    </div>
+    <div id="pathResult"></div>
+  </div>
+
+  <div class="card" style="margin-top:22px;">
+    <h3>Minimum Cost Matrix</h3>
+    <p>Row = from, column = to. “∞” means no route exists. Click a cell to see its route.</p>
+    <div class="table-wrapper"><table class="matrix" id="matrix"></table></div>
+  </div>
+
+  <div class="card" style="margin-top:22px;">
+    <h3>All Pairs — Minimum Cost and Route</h3>
+    <div class="table-wrapper"><table>
+      <thead><tr><th>From</th><th>To</th><th>Minimum Cost</th><th>Route</th></tr></thead>
+      <tbody id="pairTable"></tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about" class="page">
+  <div class="card">
+    <h2>About the Project</h2>
+    <p><strong>Project Title:</strong> Minimum Cost Campus Network using Minimum Spanning Tree</p><br>
+    <p>This project demonstrates the practical application of graph theory, Minimum Spanning Tree and shortest-path algorithms in campus network design.</p>
+    <div class="info-grid">
+      <div class="info-item"><h4>Data Structure</h4><p>Weighted Graph</p></div>
+      <div class="info-item"><h4>Algorithm 1</h4><p>Kruskal's Algorithm</p></div>
+      <div class="info-item"><h4>Algorithm 2</h4><p>Prim's Algorithm</p></div>
+      <div class="info-item"><h4>Algorithm 3</h4><p>Floyd–Warshall (all-pairs minimum cost)</p></div>
+      <div class="info-item"><h4>Technology</h4><p>HTML, CSS, JavaScript</p></div>
+      <div class="info-item"><h4>Application</h4><p>Campus Network Planning</p></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer><strong>SANDIP UNIVERSITY</strong> Minimum Cost Campus Network using MST<br>Graph Theory &amp; Discrete Mathematics Project</footer>
+
+<!-- MODALS -->
+<div id="buildingModal" class="modal"><div class="modal-box">
+  <h3>Add Campus Building</h3>
+  <div class="form-group"><label>Building Name</label><input id="buildingName" type="text" placeholder="Example: Seminar Hall"></div>
+  <div class="modal-actions"><button class="btn" onclick="closeModals()">Cancel</button><button class="btn btn-primary" onclick="addBuilding()">Add Building</button></div>
+</div></div>
+
+<div id="edgeModal" class="modal"><div class="modal-box">
+  <h3>Add Network Connection</h3>
+  <div class="form-group"><label>Building A</label><select id="edgeA"></select></div>
+  <div class="form-group"><label>Building B</label><select id="edgeB"></select></div>
+  <div class="form-group"><label>Connection Cost</label><input id="edgeCost" type="number" min="1" placeholder="Example: 5"></div>
+  <div class="modal-actions"><button class="btn" onclick="closeModals()">Cancel</button><button class="btn btn-primary" onclick="addEdge()">Add Connection</button></div>
+</div></div>
+
+<script>
+const DEF_NODES=[
+ {id:"A",name:"O BULDING",x:130,y:130,image:"images/O.webp"},
+ {id:"B",name:"Y BULDING",x:420,y:90,image:"images/Y.jpg"},
+ {id:"C",name:"S BULDING",x:720,y:150,image:"images/S.png"},
+ {id:"D",name:"SANDIP POLYTECHNICAL",x:220,y:400,image:"images/POLY.webp"},
+ {id:"E",name:"SCHOOL OF DESIGN",x:520,y:360,image:"images/D.jpg"},
+ {id:"F",name:"C BULDING",x:760,y:450,image:"images/C.jpg"},
+ {id:"G",name:"SIPS (PHRAMA SCHOOL)",x:900,y:260,image:"images/SIPS.jpg"},
+ {id:"H",name:"UNIVERSITY GATE",x:60,y:290,image:"images/GATE.webp"},
+ {id:"I",name:"FOUNDATION GATE",x:920,y:70,image:"images/F.png"}];
+const DEF_EDGES=[["A","B",4],["A","C",3],["B","C",2],["B","D",5],["C","D",7],["C","E",6],["D","E",4],["D","F",3],["E","F",2],["G","E",4],["A","H",7],["H","D",1],["C","I",5],["I","G",3],["G","F",2]].map(([from,to,weight])=>({from,to,weight}));
+
+let nodes=JSON.parse(JSON.stringify(DEF_NODES)),edges=JSON.parse(JSON.stringify(DEF_EDGES));
+let mstEdges=[],pathKeys=new Set(),FW=null;
+const $=id=>document.getElementById(id);
+const getNodeName=id=>(nodes.find(n=>n.id===id)||{name:id}).name;
+const key=(a,b)=>a<b?a+"|"+b:b+"|"+a;
+const sameEdge=(e,f)=>key(e.from,e.to)===key(f.from,f.to);
+const ELN="http://www.w3.org/2000/svg";
+
+/* NAVIGATION */
+document.querySelectorAll(".nav-btn").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.page)));
+function showPage(id){
+  document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===id));
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.page===id));
+  if(id==="paths")computeAll();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* GRAPH DRAWING */
+function drawGraph(){
+  const ms=new Set(mstEdges.map(e=>key(e.from,e.to)));let h="";
+  edges.forEach(e=>{
+    const a=nodes.find(n=>n.id===e.from),b=nodes.find(n=>n.id===e.to);if(!a||!b)return;
+    const k=key(e.from,e.to),c=pathKeys.has(k)?"edge-line path":ms.has(k)?"edge-line mst":"edge-line";
+    h+=`<line class="${c}" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"/>`;
+  });
+  edges.forEach(e=>{
+    const a=nodes.find(n=>n.id===e.from),b=nodes.find(n=>n.id===e.to);if(!a||!b)return;
+    h+=`<text class="edge-cost" x="${(a.x+b.x)/2}" y="${(a.y+b.y)/2-8}">${e.weight}</text>`;
+  });
+  nodes.forEach(n=>{
+    h+=`<defs><clipPath id="clip-${n.id}"><circle cx="${n.x}" cy="${n.y}" r="38"/></clipPath></defs>
+    <circle cx="${n.x}" cy="${n.y}" r="38" fill="#cfd2da"/>
+    <image class="building-image" href="${n.image}" x="${n.x-38}" y="${n.y-38}" width="76" height="76" preserveAspectRatio="xMidYMid slice" clip-path="url(#clip-${n.id})"/>
+    <circle cx="${n.x}" cy="${n.y}" r="39" fill="none" stroke="#007AFF" stroke-width="4"/>
+    <circle cx="${n.x+27}" cy="${n.y-27}" r="13" fill="#007AFF"/>
+    <text class="building-id" x="${n.x+27}" y="${n.y-27}">${n.id}</text>
+    <text class="building-name" x="${n.x}" y="${n.y+62}">${n.name}</text>`;
+  });
+  $("graphSvg").innerHTML=h;
+  updateTable();updateStats();
+}
+
+/* UNION FIND */
+class UnionFind{
+  constructor(items){this.parent={};items.forEach(i=>this.parent[i]=i)}
+  find(x){if(this.parent[x]!==x)this.parent[x]=this.find(this.parent[x]);return this.parent[x]}
+  union(a,b){const ra=this.find(a),rb=this.find(b);if(ra===rb)return false;this.parent[rb]=ra;return true}
+}
+
+/* KRUSKAL */
+function runKruskal(){
+  const uf=new UnionFind(nodes.map(n=>n.id)),selected=[],steps=[];
+  for(const e of [...edges].sort((a,b)=>a.weight-b.weight)){
+    if(uf.union(e.from,e.to)){selected.push(e);steps.push(`Selected ${getNodeName(e.from)} — ${getNodeName(e.to)} (cost ${e.weight})`)}
+    else steps.push(`Rejected ${getNodeName(e.from)} — ${getNodeName(e.to)} because it creates a cycle`);
+    if(selected.length===nodes.length-1)break;
+  }
+  mstEdges=selected;pathKeys=new Set();drawGraph();
+  showAlgorithmResult("Kruskal's Algorithm",selected,steps);
+}
+
+/* PRIM */
+function runPrim(){
+  if(!nodes.length)return;
+  const visited=new Set([nodes[0].id]),selected=[],steps=[];
+  while(visited.size<nodes.length){
+    let best=null;
+    for(const e of edges)if(visited.has(e.from)!==visited.has(e.to)&&(!best||e.weight<best.weight))best=e;
+    if(!best)break;
+    selected.push(best);
+    steps.push(`Selected ${getNodeName(best.from)} — ${getNodeName(best.to)} (cost ${best.weight})`);
+    visited.add(best.from);visited.add(best.to);
+  }
+  mstEdges=selected;pathKeys=new Set();drawGraph();
+  showAlgorithmResult("Prim's Algorithm",selected,steps);
+}
+
+function showAlgorithmResult(algorithm,selected,steps){
+  const total=selected.reduce((s,e)=>s+Number(e.weight),0);
+  $("algorithmResult").innerHTML=`<div class="result-box">
+    <h3>${algorithm} Result</h3>
+    <div class="result-cost">Total Cost: ${total}</div>
+    <p>MST contains <strong>${selected.length}</strong> connections.</p><br>
+    <h4>Selected Connections</h4>
+    ${selected.map(e=>`<div class="step">✓ ${getNodeName(e.from)} → ${getNodeName(e.to)} &nbsp; | &nbsp; Cost: <strong>${e.weight}</strong></div>`).join("")}
+    <br><h4>Algorithm Steps</h4>
+    ${steps.map(s=>`<div class="step">${s}</div>`).join("")}</div>`;
+}
+
+/* FLOYD–WARSHALL : MINIMUM COST BETWEEN EVERY PAIR */
+function floyd(){
+  const ids=nodes.map(n=>n.id),n=ids.length,ix={};ids.forEach((id,i)=>ix[id]=i);
+  const d=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?0:Infinity));
+  const nx=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?i:-1));
+  edges.forEach(e=>{
+    const a=ix[e.from],b=ix[e.to],w=Number(e.weight);
+    if(w<d[a][b]){d[a][b]=d[b][a]=w;nx[a][b]=b;nx[b][a]=a}
+  });
+  for(let k=0;k<n;k++)for(let i=0;i<n;i++)for(let j=0;j<n;j++)
+    if(d[i][k]+d[k][j]<d[i][j]){d[i][j]=d[i][k]+d[k][j];nx[i][j]=nx[i][k]}
+  FW={ids,ix,d,nx};
+}
+function route(a,b){
+  if(!FW)floyd();
+  const {ids,ix,nx,d}=FW;let i=ix[a];const j=ix[b];
+  if(d[i][j]===Infinity)return null;
+  const p=[ids[i]];while(i!==j){i=nx[i][j];p.push(ids[i])}return p;
+}
+function fillPathSelects(){
+  [["pathFrom",0],["pathTo",1]].forEach(([id,k])=>{
+    const s=$(id),old=s.value;
+    s.innerHTML=nodes.map(n=>`<option value="${n.id}">${n.id} — ${n.name}</option>`).join("");
+    s.value=nodes.some(n=>n.id===old)?old:(nodes[k]||nodes[0]).id;
+  });
+}
+function computeAll(){
+  floyd();fillPathSelects();
+  const {ids,d}=FW,f=v=>v===Infinity?"∞":v;
+  let h=`<thead><tr><th></th>${ids.map(i=>`<th title="${getNodeName(i)}">${i}</th>`).join("")}</tr></thead><tbody>`;
+  ids.forEach((a,i)=>{
+    h+=`<tr><th title="${getNodeName(a)}">${a}</th>`;
+    ids.forEach((b,j)=>h+=i===j?`<td class="diag">0</td>`:`<td class="click" onclick="pickPair('${a}','${b}')">${f(d[i][j])}</td>`);
+    h+="</tr>";
+  });
+  $("matrix").innerHTML=h+"</tbody>";
+  let rows="";
+  for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++){
+    const p=route(ids[i],ids[j]);
+    rows+=`<tr><td>${getNodeName(ids[i])}</td><td>${getNodeName(ids[j])}</td><td><strong>${f(d[i][j])}</strong></td><td>${p?p.map(getNodeName).join(" → "):"No route"}</td></tr>`;
+  }
+  $("pairTable").innerHTML=rows;
+}
+function pickPair(a,b){$("pathFrom").value=a;$("pathTo").value=b;findPath()}
+function findPath(){
+  if(!FW)computeAll();
+  const a=$("pathFrom").value,b=$("pathTo").value;
+  if(a===b){$("pathResult").innerHTML=`<div class="result-box">Choose two different buildings.</div>`;return}
+  const p=route(a,b);pathKeys=new Set();
+  if(!p){drawGraph();$("pathResult").innerHTML=`<div class="result-box">No route exists between ${getNodeName(a)} and ${getNodeName(b)}.</div>`;return}
+  let steps="";
+  for(let i=0;i<p.length-1;i++){
+    const k=key(p[i],p[i+1]);pathKeys.add(k);
+    const e=edges.filter(x=>key(x.from,x.to)===k).sort((x,y)=>x.weight-y.weight)[0];
+    steps+=`<div class="step">${getNodeName(p[i])} → ${getNodeName(p[i+1])} &nbsp; | &nbsp; Cost: <strong>${e.weight}</strong></div>`;
+  }
+  drawGraph();
+  $("pathResult").innerHTML=`<div class="result-box">
+    <h3>${getNodeName(a)} → ${getNodeName(b)}</h3>
+    <div class="result-cost">Minimum Cost: ${FW.d[FW.ix[a]][FW.ix[b]]}</div>
+    <p><strong>Route:</strong> ${p.map(getNodeName).join(" → ")}</p><br>${steps}
+    <p style="margin-top:12px">The route is highlighted in orange on the Campus Network graph.</p></div>`;
+}
+function clearPath(){pathKeys=new Set();$("pathResult").innerHTML="";drawGraph()}
+
+/* TABLE & STATS */
+function updateTable(){
+  $("edgeTable").innerHTML=edges.map(e=>{
+    const m=mstEdges.some(x=>sameEdge(x,e));
+    return `<tr class="${m?"mst-row":""}"><td>${getNodeName(e.from)}</td><td>${getNodeName(e.to)}</td><td><strong>${e.weight}</strong></td><td>${m?"✓ Selected":"—"}</td></tr>`;
+  }).join("");
+}
+function updateStats(){
+  $("homeNodes").textContent=nodes.length;$("homeEdges").textContent=edges.length;
+  $("homeMst").textContent=mstEdges.length;
+  $("homeCost").textContent=mstEdges.reduce((s,e)=>s+Number(e.weight),0);
+}
+
+/* MODALS */
+function openBuildingModal(){$("buildingModal").classList.add("show")}
+function openEdgeModal(){
+  const o=nodes.map(n=>`<option value="${n.id}">${n.name}</option>`).join("");
+  $("edgeA").innerHTML=o;$("edgeB").innerHTML=o;$("edgeModal").classList.add("show");
+}
+function closeModals(){document.querySelectorAll(".modal").forEach(m=>m.classList.remove("show"))}
+function refresh(){
+  mstEdges=[];pathKeys=new Set();FW=null;drawGraph();fillPathSelects();
+  if($("paths").classList.contains("active"))computeAll();
+}
+
+/* ADD BUILDING / EDGE */
+function addBuilding(){
+  const input=$("buildingName"),name=input.value.trim();
+  if(!name)return alert("Please enter a building name.");
+  const id="ABCDEFGHIJKLMNOPQRSTUVWXYZ"[nodes.length]||"N"+(nodes.length+1);
+  const pos=[[120,130],[430,100],[750,140],[200,400],[520,360],[760,450],[450,500],[100,280],[800,280]];
+  const [x,y]=pos[nodes.length%pos.length];
+  nodes.push({id,name,x,y,image:"images/main-block.jpg"});
+  input.value="";closeModals();refresh();
+}
+function addEdge(){
+  const from=$("edgeA").value,to=$("edgeB").value,weight=Number($("edgeCost").value);
+  if(from===to)return alert("A building cannot connect to itself.");
+  if(!weight||weight<=0)return alert("Enter a valid connection cost.");
+  if(edges.some(e=>key(e.from,e.to)===key(from,to)))return alert("This connection already exists.");
+  edges.push({from,to,weight});$("edgeCost").value="";closeModals();refresh();
+}
+
+/* RESET */
+function resetCampus(){
+  if(!confirm("Reset the campus network?"))return;
+  nodes=JSON.parse(JSON.stringify(DEF_NODES));edges=JSON.parse(JSON.stringify(DEF_EDGES));
+  $("algorithmResult").innerHTML=`<div class="result-box"><h3>Algorithm Result</h3><p>Campus has been reset. Select Kruskal or Prim to calculate the Minimum Spanning Tree.</p></div>`;
+  $("pathResult").innerHTML="";refresh();
+}
+
+drawGraph();fillPathSelects();
+</script>
+</body>
+</html>
